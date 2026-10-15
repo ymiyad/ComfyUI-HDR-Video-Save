@@ -18,6 +18,8 @@ It is designed as the missing output stage for **NVIDIA RTX TrueHDR** ([ComfyUI_
 - **HDR10 static metadata** (mastering display, MaxCLL / MaxFALL) is embedded for PQ output when encoding with libx265.
 - Encoders: `libx265` or `hevc_nvenc` (GPU).
 - Optional `AUDIO` input, muxed into the MP4 as AAC.
+- Video preview on the node after saving, like the built-in Save Video node.
+- `filename_prefix` supports the same date syntax as the built-in save nodes (`%date:yyyy-MM-dd%`), plus `%width%` / `%height%`.
 - `hvc1` tag for QuickTime / Apple playback, and `faststart` for streaming.
 - Handles odd resolutions by padding to even dimensions, and accepts RGBA or grayscale input.
 
@@ -60,7 +62,7 @@ Run super resolution and frame generation **before** TrueHDR. Those effects expe
 | Input | Default | Description |
 | --- | --- | --- |
 | `images` | — | HDR-encoded `IMAGE` batch (BT.2020, HLG or PQ, normalized 0–1). |
-| `filename_prefix` | `HDR/video` | Output path inside the ComfyUI output folder. |
+| `filename_prefix` | `HDR/video` | Output path inside the ComfyUI output folder. Use `/` for subfolders. Supports `%date:FORMAT%` (tokens `yyyy` `yy` `MM` `M` `dd` `d` `hh` `h` `mm` `m` `ss` `s`, e.g. `HDR/%date:yyyy/yyyy-MM%/video`) and `%width%` / `%height%`. |
 | `fps` | `24.0` | Frame rate. After frame generation, multiply the source fps by the multiplier. |
 | `transfer` | `HLG` | `HLG` or `PQ (HDR10)`. |
 | `encoder` | `libx265` | `libx265` or `hevc_nvenc`. |
@@ -71,6 +73,8 @@ Run super resolution and frame generation **before** TrueHDR. Those effects expe
 | `audio` | (optional) | Audio to mux into the file as AAC 320 kbps. Trimmed to the video length. |
 
 Output: `filepath` (STRING), the path of the saved MP4.
+
+The saved video is previewed on the node. Browser preview of HEVC depends on the browser and OS (Safari / Chrome / Edge with hardware HEVC decoding play it). How HDR looks in the preview depends on the browser and display.
 
 ### Notes
 
@@ -105,6 +109,8 @@ HDR符号化済みの `IMAGE` バッチを、正しい色タグ付きの **10bit
 - PQをlibx265でエンコードすると、**HDR10静的メタデータ**（Mastering Display、MaxCLL/MaxFALL）を埋め込みます。
 - エンコーダは `libx265` と `hevc_nvenc`（GPU）から選べます。
 - `AUDIO` 入力は任意です。つなぐとAACでMP4に多重化します。
+- 保存後、標準のSave Videoノードと同じようにノード上で動画をプレビューできます。
+- `filename_prefix` で、標準の保存ノードと同じ日付書式（`%date:yyyy-MM-dd%`）と `%width%` / `%height%` が使えます。
 - QuickTimeやApple機器で再生できるよう `hvc1` タグを付け、ストリーミング向けに `faststart` も有効にしています。
 - 奇数解像度は偶数に合わせてパディングします。RGBAやグレースケールの入力にも対応しています。
 
@@ -147,7 +153,7 @@ Load Video → (RTX Video Super Resolution / Frame Generation) → RTX TrueHDR �
 | 入力 | 既定値 | 説明 |
 | --- | --- | --- |
 | `images` | — | HDR符号化済みの `IMAGE` バッチ（BT.2020、HLGまたはPQ、0〜1に正規化）。 |
-| `filename_prefix` | `HDR/video` | ComfyUIのoutputフォルダ内の保存先。 |
+| `filename_prefix` | `HDR/video` | ComfyUIのoutputフォルダ内の保存先。`/` でサブフォルダになります。`%date:書式%`（トークンは `yyyy` `yy` `MM` `M` `dd` `d` `hh` `h` `mm` `m` `ss` `s`。例：`HDR/%date:yyyy/yyyy-MM%/video`）と `%width%` / `%height%` が使えます。 |
 | `fps` | `24.0` | フレームレート。フレーム補間後は、元のfpsに倍率を掛けた値にします。 |
 | `transfer` | `HLG` | `HLG` または `PQ (HDR10)`。 |
 | `encoder` | `libx265` | `libx265` または `hevc_nvenc`。 |
@@ -158,6 +164,8 @@ Load Video → (RTX Video Super Resolution / Frame Generation) → RTX TrueHDR �
 | `audio` | （任意） | AAC 320kbpsで多重化する音声。動画の長さで切り詰めます。 |
 
 出力は `filepath`（STRING）で、保存したMP4のパスです。
+
+保存した動画はノード上でプレビューされます。HEVCをプレビューで再生できるかはブラウザとOSによります（Safari、またはハードウェアデコードが有効なChrome / Edgeで再生できます）。プレビューでHDRがどう見えるかは、ブラウザとディスプレイによって変わります。
 
 ### 注意点
 

@@ -7,7 +7,9 @@ MP4 with proper HDR color tagging. Frames are piped to ffmpeg as 16-bit RGB,
 so no intermediate image files and no 8-bit quantization.
 """
 
+import datetime
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -31,6 +33,42 @@ def _find_ffmpeg():
             "ffmpeg が見つかりません。PATH に通すか、環境変数 FFMPEG_PATH を設定するか、"
             "ComfyUI の Python に imageio-ffmpeg を入れてください。"
         )
+
+
+# ComfyUI フロントエンドの formatDate と同じトークン仕様
+# (yyyy, yy, MM, M, dd, d, hh, h, mm, m, ss, s)
+_DATE_TOKEN = re.compile(r"dd?|MM?|hh?|mm?|ss?|yyy?y?")
+_DATE_PARTS = {
+    "d": lambda t: t.day,
+    "M": lambda t: t.month,
+    "h": lambda t: t.hour,
+    "m": lambda t: t.minute,
+    "s": lambda t: t.second,
+}
+
+
+def _format_date(fmt, now):
+    def repl(m):
+        tok = m.group(0)
+        if tok == "yy":
+            return str(now.year)[2:]
+        if tok == "yyyy":
+            return str(now.year)
+        if tok[0] in _DATE_PARTS:
+            return str(_DATE_PARTS[tok[0]](now)).zfill(len(tok))
+        return tok
+    return _DATE_TOKEN.sub(repl, fmt)
+
+
+def _expand_date_placeholders(prefix, now=None):
+    """'%date:yyyy/yyyy-MM%' のような標準ノードと同じ日付書式を展開する。
+
+    ComfyUI 標準の保存ノードではフロントエンドがこの置換を行うが、
+    カスタムノードには適用されないため、サーバー側で同じ処理を行う。
+    （%width% / %height% / %year% などは folder_paths 側で展開される）
+    """
+    now = now or datetime.datetime.now()
+    return re.sub(r"%date:([^%]+)%", lambda m: _format_date(m.group(1), now), prefix)
 
 
 def _write_wav(audio, path):
@@ -64,7 +102,9 @@ class SaveHDRVideo:
         return {
             "required": {
                 "images": ("IMAGE",),
-                "filename_prefix": ("STRING", {"default": "HDR/video"}),
+                "filename_prefix": ("STRING", {"default": "HDR/video",
+                                    "tooltip": "標準の保存ノードと同じく %date:yyyy-MM-dd% などの日付書式や "
+                                               "%width% / %height% が使えます。/ でサブフォルダ"}),
                 "fps": ("FLOAT", {"default": 24.0, "min": 1.0, "max": 240.0, "step": 0.001}),
                 "transfer": (["HLG", "PQ (HDR10)"], {"default": "HLG",
                              "tooltip": "TrueHDR の output_colorspace と合わせる（HDR→HLG, HDR PQ→PQ）"}),
@@ -95,11 +135,13 @@ class SaveHDRVideo:
         trc = "smpte2084" if is_pq else "arib-std-b67"
         trc_code = 16 if is_pq else 18  # H.273: 16 = PQ (SMPTE ST 2084), 18 = HLG (ARIB STD-B67)
 
+        filename_prefix = _expand_date_placeholders(filename_prefix)
         out_dir = folder_paths.get_output_directory()
         full_dir, fname, counter, subfolder, _ = folder_paths.get_save_image_path(
             filename_prefix, out_dir, w, h)
         os.makedirs(full_dir, exist_ok=True)
-        out_path = os.path.join(full_dir, f"{fname}_{counter:05}_{'pq' if is_pq else 'hlg'}.mp4")
+        out_name = f"{fname}_{counter:05}_{'pq' if is_pq else 'hlg'}.mp4"
+        out_path = os.path.join(full_dir, out_name)
 
         pix_fmt = "p010le" if encoder == "hevc_nvenc" else "yuv420p10le"
         vf = ("pad=ceil(iw/2)*2:ceil(ih/2)*2,"
@@ -183,7 +225,9 @@ class SaveHDRVideo:
         err.close()
 
         print(f"[SaveHDRVideo] saved: {out_path}")
-        return {"ui": {"text": [out_path]}, "result": (out_path,)}
+        # 標準の SaveVideo と同じ形式で返すと、ノード上に動画プレビューが表示される
+        preview = {"filename": out_name, "subfolder": subfolder, "type": "output"}
+        return {"ui": {"images": [preview], "animated": (True,)}, "result": (out_path,)}
 
 
 NODE_CLASS_MAPPINGS = {"SaveHDRVideo": SaveHDRVideo}
