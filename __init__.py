@@ -1,5 +1,5 @@
 """
-ComfyUI HDR Video Save
+ComfyUI-HDR-Video-Save
 ----------------------
 Encodes an IMAGE batch that already carries an HDR signal (e.g. the output of
 NVIDIA "RTX TrueHDR": BT.2020 + HLG or PQ, normalized 0-1) into a 10-bit HEVC
