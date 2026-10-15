@@ -93,6 +93,7 @@ class SaveHDRVideo:
         n, h, w, c = images.shape
         is_pq = transfer.startswith("PQ")
         trc = "smpte2084" if is_pq else "arib-std-b67"
+        trc_code = 16 if is_pq else 18  # H.273: 16 = PQ (SMPTE ST 2084), 18 = HLG (ARIB STD-B67)
 
         out_dir = folder_paths.get_output_directory()
         full_dir, fname, counter, subfolder, _ = folder_paths.get_save_image_path(
@@ -103,7 +104,9 @@ class SaveHDRVideo:
         pix_fmt = "p010le" if encoder == "hevc_nvenc" else "yuv420p10le"
         vf = ("pad=ceil(iw/2)*2:ceil(ih/2)*2,"
               "scale=out_color_matrix=bt2020:out_range=tv:flags=accurate_rnd+full_chroma_int,"
-              f"format={pix_fmt}")
+              f"format={pix_fmt},"
+              # フレーム自体にも色情報を付けておく（エンコーダがフレーム側の値を参照する場合の保険）
+              f"setparams=range=tv:color_primaries=bt2020:color_trc={trc}:colorspace=bt2020nc")
 
         cmd = [ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
                "-f", "rawvideo", "-pix_fmt", "rgb48le", "-s", f"{w}x{h}",
@@ -139,6 +142,13 @@ class SaveHDRVideo:
                       "（色タグのみ）。厳密な HDR10 が必要なら libx265 を使ってください。")
             cmd += ["-c:v", "hevc_nvenc", "-profile:v", "main10", "-preset", "p6",
                     "-rc", "vbr", "-cq", str(quality), "-b:v", "0"]
+
+        # エンコーダに関係なく、HEVC ビットストリームの VUI（SPS）に色情報を確実に書き込む。
+        # hevc_nvenc は環境によって VUI の色情報を出力しないことがあり、
+        # その場合 macOS などで HDR として認識されない。
+        cmd += ["-bsf:v",
+                f"hevc_metadata=colour_primaries=9:transfer_characteristics={trc_code}"
+                ":matrix_coefficients=9:video_full_range_flag=0"]
 
         cmd += ["-color_primaries", "bt2020", "-color_trc", trc,
                 "-colorspace", "bt2020nc", "-color_range", "tv",
