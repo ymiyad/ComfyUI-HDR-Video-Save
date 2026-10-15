@@ -11,7 +11,7 @@ Repository = "https://github.com/ymiyad/ComfyUI-HDR-Video-Save"
 "Bug Tracker" = "https://github.com/ymiyad/ComfyUI-HDR-Video-Save/issues"
 
 [tool.comfy]
-PublisherId = "<your-publisher-id>"
+PublisherId = "ymiyad"
 DisplayName = "ComfyUI-HDR-Video-Save"
 Icon = ""
 includes = []
