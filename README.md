@@ -1,4 +1,4 @@
-# ComfyUI HDR Video Save
+# ComfyUI-HDR-Video-Save
 
 [English](#english) | [日本語](#日本語)
 
@@ -25,7 +25,7 @@ It is designed as the missing output stage for **NVIDIA RTX TrueHDR** ([ComfyUI_
 
 ```
 cd ComfyUI/custom_nodes
-git clone https://github.com/<your-account>/ComfyUI_HDR_Video_Save.git
+git clone https://github.com/<your-account>/ComfyUI-HDR-Video-Save.git
 ```
 
 Restart ComfyUI. No extra Python packages are required.
@@ -112,7 +112,7 @@ HDR符号化済みの `IMAGE` バッチを、正しい色タグ付きの **10bit
 
 ```
 cd ComfyUI/custom_nodes
-git clone https://github.com/<your-account>/ComfyUI_HDR_Video_Save.git
+git clone https://github.com/<your-account>/ComfyUI-HDR-Video-Save.git
 ```
 
 ComfyUIを再起動してください。追加のPythonパッケージは不要です。
