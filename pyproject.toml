@@ -1,0 +1,17 @@
+[project]
+name = "comfyui-hdr-video-save"
+description = "Save HDR-encoded IMAGE batches (e.g. NVIDIA RTX TrueHDR output) as 10-bit HEVC HDR MP4 (HLG or PQ/HDR10) with correct BT.2020 color tagging and HDR10 metadata."
+version = "1.0.0"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/<your-account>/ComfyUI-HDR-Video-Save"
+"Bug Tracker" = "https://github.com/<your-account>/ComfyUI-HDR-Video-Save/issues"
+
+[tool.comfy]
+PublisherId = "<your-publisher-id>"
+DisplayName = "ComfyUI-HDR-Video-Save"
+Icon = ""
+includes = []
